@@ -4,18 +4,18 @@ from flask_httpauth import HTTPBasicAuth
 
 app = Flask(__name__)
 
-# MySQL configurations
+
 app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "root"  # Replace with your actual username
-app.config["MYSQL_PASSWORD"] = "123987"  # Replace with your actual password
+app.config["MYSQL_USER"] = "root"  
+app.config["MYSQL_PASSWORD"] = "root"  
 app.config["MYSQL_DB"] = "person"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 mysql = MySQL(app)
 
-# HTTP Basic Auth configuration (replace with actual user data retrieval)
+
 auth = HTTPBasicAuth()
-users = {  # Replace with a dictionary of usernames and passwords
+users = {  
     "ceianyy": "password123",
     "johndoe": "secretpass"
 }
@@ -32,7 +32,7 @@ def unauthorized():
     return make_response(jsonify({"message": "Unauthorized access"}), 401)
 
 
-# Protected routes (require authentication)
+
 @app.route("/personinfo", methods=["GET"])
 @auth.login_required
 def get_personinfo():
@@ -106,7 +106,7 @@ def update_person(id):
 
 
 @app.route("/personinfo/<int:id>", methods=["DELETE"])
-@auth.login_required  # Require authentication for delete
+@auth.login_required 
 def delete_person(id):
     cur = mysql.connection.cursor()
     cur.execute("DELETE FROM personinfo WHERE id = %s", (id,))
