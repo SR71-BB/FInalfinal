@@ -1,44 +1,44 @@
-from flask import Flask, make_response, jsonify, request
+from flask import Flask, make_response, request, jsonify
 from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "root"
+app.config["MYSQL_PASSWORD"] = "123987"
 app.config["MYSQL_DB"] = "person"
-
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
-mysql = MySQL(app)
+mysql = MySQL(app)  
+
 
 @app.route("/")
-def hello():
-    return "Hello, World!"
+def hello_world():
+    return "<p> hello world</p>"
 
 
 @app.route("/personinfo", methods=["GET"])
 def get_personinfo():
     cur = mysql.connection.cursor()
-    query = """
-    select * from personinfo
-    """
+    query = "SELECT * FROM personinfo"
     cur.execute(query)
     data = cur.fetchall()
-    cur.close
+    cur.close()
 
     return make_response(jsonify(data), 200)
 
 
 @app.route("/personinfo/<int:id>", methods=["GET"])
-def get_person_id(id):
+def get_person_by_id(id):
     cur = mysql.connection.cursor()
-    query = """
-    SELECT * FROM person.personinfo WHERE ID = {}; """.format(id)
-    cur.execute(query)
-    data = cur.fetchall()
-    cur.close
+    query = "SELECT * FROM personinfo WHERE id = %s"
+    cur.execute(query, (id,))
+    data = cur.fetchone()
+    cur.close()
 
-    return make_response(jsonify(data), 200)
+    if data:
+        return make_response(jsonify(data), 200)
+    else:
+        return make_response(jsonify({"message": "Person not found"}), 404)
 
 
 @app.route("/personinfo", methods=["POST"])
@@ -71,8 +71,9 @@ def update_person(id):
     if not name or not age:
         return make_response(jsonify({"message": "Missing required fields"}), 400)
 
+    
     query = "UPDATE personinfo SET name = %s, age = %s WHERE id = %s"
-    cur.execute(query, (name, age, id))
+    cur.execute(query, (name, age, id))  
     mysql.connection.commit()
     rows_affected = cur.rowcount
     cur.close()
@@ -96,6 +97,5 @@ def delete_person(id):
                                  "rows_affected": rows_affected}), 200)
 
 
-
 if __name__ == "__main__":
-    app.run(debug = True)
+    app.run(debug=True)
