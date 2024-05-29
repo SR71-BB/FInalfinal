@@ -1,22 +1,40 @@
 from flask import Flask, make_response, request, jsonify
 from flask_mysqldb import MySQL
+from flask_httpauth import HTTPBasicAuth
 
 app = Flask(__name__)
+
+# MySQL configurations
 app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "123987"
+app.config["MYSQL_USER"] = "root"  # Replace with your actual username
+app.config["MYSQL_PASSWORD"] = "123987"  # Replace with your actual password
 app.config["MYSQL_DB"] = "person"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
-mysql = MySQL(app)  
+mysql = MySQL(app)
+
+# HTTP Basic Auth configuration (replace with actual user data retrieval)
+auth = HTTPBasicAuth()
+users = {  # Replace with a dictionary of usernames and passwords
+    "ceianyy": "password123",
+    "johndoe": "secretpass"
+}
 
 
-@app.route("/")
-def hello_world():
-    return "<p> hello world</p>"
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and users[username] == password:
+        return username
 
 
+@auth.error_handler
+def unauthorized():
+    return make_response(jsonify({"message": "Unauthorized access"}), 401)
+
+
+# Protected routes (require authentication)
 @app.route("/personinfo", methods=["GET"])
+@auth.login_required
 def get_personinfo():
     cur = mysql.connection.cursor()
     query = "SELECT * FROM personinfo"
@@ -28,6 +46,7 @@ def get_personinfo():
 
 
 @app.route("/personinfo/<int:id>", methods=["GET"])
+@auth.login_required
 def get_person_by_id(id):
     cur = mysql.connection.cursor()
     query = "SELECT * FROM personinfo WHERE id = %s"
@@ -42,6 +61,7 @@ def get_person_by_id(id):
 
 
 @app.route("/personinfo", methods=["POST"])
+@auth.login_required
 def add_person():
     cur = mysql.connection.cursor()
     info = request.get_json()
@@ -62,6 +82,7 @@ def add_person():
 
 
 @app.route("/personinfo/<int:id>", methods=["PUT"])
+@auth.login_required
 def update_person(id):
     cur = mysql.connection.cursor()
     info = request.get_json()
@@ -71,9 +92,8 @@ def update_person(id):
     if not name or not age:
         return make_response(jsonify({"message": "Missing required fields"}), 400)
 
-    
     query = "UPDATE personinfo SET name = %s, age = %s WHERE id = %s"
-    cur.execute(query, (name, age, id))  
+    cur.execute(query, (name, age, id))
     mysql.connection.commit()
     rows_affected = cur.rowcount
     cur.close()
@@ -86,6 +106,7 @@ def update_person(id):
 
 
 @app.route("/personinfo/<int:id>", methods=["DELETE"])
+@auth.login_required  # Require authentication for delete
 def delete_person(id):
     cur = mysql.connection.cursor()
     cur.execute("DELETE FROM personinfo WHERE id = %s", (id,))
@@ -95,7 +116,6 @@ def delete_person(id):
 
     return make_response(jsonify({"message": "Person deleted successfully",
                                  "rows_affected": rows_affected}), 200)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
