@@ -21,8 +21,9 @@ def hello_world():
 
 auth = HTTPBasicAuth()
 users = {  
-    "ceianyy": "password123",
-    "johndoe": "secretpass"
+    "johndoe": "secretpass",
+    "dart": "zxcasd",
+    "dsa": "wordpass"
 }
 
 
